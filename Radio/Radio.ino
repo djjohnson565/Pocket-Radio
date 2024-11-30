@@ -7,16 +7,18 @@ Pocket Radio Project
 #include <Wire.h>
 #include <Radio.h>
 
+#define FREQ A10
+
 TEA5767 radio = TEA5767();
 float frequency = 99.3;//Radio Station
 
 void setup() {
   Serial.begin(115200);
   Wire.begin();
-  radio.setFrequency(frequency);
+  //radio.setFrequency(frequency);
 }
 
 void loop() {
-  Serial.println(frequency, radio.getVolume());
-  Serial.println("commit 2");
+  frequency = analogRead(FREQ);
+  radio.setFrequency(frequency);
 } 
