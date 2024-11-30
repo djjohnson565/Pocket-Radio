@@ -10,15 +10,15 @@ Pocket Radio Project
 #define FREQ A10
 
 TEA5767 radio = TEA5767();
-float frequency = 99.3;//Radio Station
+float frequency = 100.7;//Radio Station
 
 void setup() {
   Serial.begin(115200);
   Wire.begin();
-  //radio.setFrequency(frequency);
+  radio.setFrequency(frequency);
 }
 
 void loop() {
-  frequency = analogRead(FREQ);
-  radio.setFrequency(frequency);
+  //frequency = analogRead(FREQ);
+  //radio.setFrequency(frequency);
 } 
