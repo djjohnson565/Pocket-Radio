@@ -18,7 +18,7 @@ int SAMPLES = 10;
 void setup() {
   Serial.begin(115200);
   Wire.begin();
-  //radio.setFrequency(frequency);
+  radio.setFrequency(frequency);
 }
 void loop() {
   freq_read = 0;
@@ -31,5 +31,15 @@ void loop() {
   Serial.print(frequency);
   Serial.print(", Unfiltered: ");
   Serial.println(analogRead(FREQ));
+  //Serial.print("Actual: ");
+  //Serial.println(radio.getFrequency());
   delay(500);
 } 
+
+/*
+Mechanical Updates:
+Soldered, but only works for headphone, controlled volume knob to speaker not working
+Most likely a grounding issue
+ 12/1/24 1:16am
+- Derek
+*/
