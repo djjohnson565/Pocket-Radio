@@ -38,8 +38,7 @@ void loop() {
 
 /*
 Mechanical Updates:
-Soldered, but only works for headphone, controlled volume knob to speaker not working
-Most likely a grounding issue
- 12/1/24 1:16am
+Like 90% working, issue was the vcc cable to audio amplifier was not wired correctly
+ 12/1/24 2:19am
 - Derek
 */
