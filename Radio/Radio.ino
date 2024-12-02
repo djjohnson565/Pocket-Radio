@@ -2,10 +2,6 @@
 Pocket Radio Project
 */
 
-/*
-NOTE: README.txt not working, git process error, will be fixed later on
-*/
-
 #include <Arduino.h>
 #include <TEA5767.h>
 #include <Wire.h>
@@ -55,8 +51,6 @@ void loop() {
   Serial.print(frequency);
   Serial.print(", Unfiltered: ");
   Serial.println(analogRead(FREQ));
-  //Serial.print("Actual: ");
-  //Serial.println(radio.getFrequency());
   delay(500);
 } 
 
@@ -79,11 +73,3 @@ void draw_main() {
   lcd.drawString(97, HEIGHT - 20, "Next");
   lcd.display();
 }
-
-
-/*
-Mechanical Updates:
-Like 90% working, issue was the vcc cable to audio amplifier was not wired correctly
- 12/1/24 2:19am
-- Derek
-*/
