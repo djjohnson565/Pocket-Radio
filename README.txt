@@ -10,5 +10,5 @@ Our project is focused on creating a pocket-sized radio player that captures and
 
 Main File: Radio/Radio.ino
 
-
-Last Update: 11/20/24 9:20pm
+Last Update: 12/2/2024 11:43am
+-Added rough sketch for the main screen

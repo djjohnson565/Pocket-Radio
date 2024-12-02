@@ -1,6 +1,11 @@
 /*
 Pocket Radio Project
 */
+
+/*
+NOTE: README.txt not working, git process error, will be fixed later on
+*/
+
 #include <Arduino.h>
 #include <TEA5767.h>
 #include <Wire.h>
