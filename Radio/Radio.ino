@@ -132,11 +132,6 @@ void setup() {
 
   radioInfo.initWire(Wire);
 
-  radioInfo.setBandFrequency(FIX_BAND, 10070);
-  radioInfo.setVolume(8);
-  radioInfo.setMono(false);
-  radioInfo.setMute(false);
-
 //Adding a function to proccess the RDS data to the radio module when it received RDS data
   radioInfo.attachReceiveRDS(RDS_process);
 //Adding functions to do when the RDS data is processed 
@@ -157,7 +152,7 @@ void setup() {
   draw_main();
 }
 void loop() {
-  char rdsData[8];
+  char rdsData[10];
   radioInfo.formatFrequency(rdsData, sizeof(rdsData)); //format the frequency for printing, ALTERNATIVE OPTION
   freq_read = 0;
   for(int i = 0; i < SAMPLES; i++) {
@@ -181,5 +176,4 @@ void loop() {
     draw_real();
   }
   delay(500);
-} 
-
+}
