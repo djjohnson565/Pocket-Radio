@@ -71,6 +71,10 @@ void DisplayTime(uint8_t hour, uint8_t minute) {
 //   lcd.print(out + "  ");
 // }
 
+void RDS_process(uint16_t block1, uint16_t block2, uint16_t block3, uint16_t block4) {
+  rds.processData(block1, block2, block3, block4);
+}
+
 //draw the main menu screen
 //Very rough idea of what it looks like for now, "Back", "Home", "Next" refer to 3 buttons on Makerboard B0, B1, B3
 void draw_main() {
