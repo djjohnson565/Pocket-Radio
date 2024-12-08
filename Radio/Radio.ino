@@ -112,7 +112,8 @@ void setup() {
   Wire.begin();
 
   radio.setFrequency(frequency);
-  radioInfo.setFrequency(frequency);
+  radioInfo.setBandFrequency(RADIO_BAND_FM, int(frequency*100));
+  radioInfo.setMute(true);
 
   //Setup for the Si4703
   radioInfo.setup(RADIO_RESETPIN, RESET_PIN);
