@@ -35,6 +35,7 @@ int freq_read; //Potentiometer Input
 float frequency = 100.7; //Radio Station
 int SAMPLES = 10;
 
+/*
 void DisplayServiceName(const char *name) {
   Serial.print("RDS:");
   Serial.println(name);
@@ -59,7 +60,7 @@ void DisplayTime(uint8_t hour, uint8_t minute) {
   if (minute < 10) Serial.print('0');
   Serial.println(minute);
 }  // DisplayTime()
-
+*/
 
 /// Display a label and value for several purpose
 // void DisplayMenuValue(String label, int value) {
@@ -116,9 +117,10 @@ void setup() {
   Wire.begin();
 
   radio.setFrequency(frequency);
+  /*
   radioInfo.setBandFrequency(RADIO_BAND_FM, int(frequency*100));
   radioInfo.setMute(true);
-
+  
   //Setup for the Si4703
   radioInfo.setup(RADIO_RESETPIN, RESET_PIN);
   radioInfo.setup(RADIO_MODEPIN, MODE_PIN);
@@ -131,14 +133,14 @@ void setup() {
   radioInfo.setup(RADIO_DEEMPHASIS, RADIO_DEEMPHASIS_75);  // for US
 
   radioInfo.initWire(Wire);
-
+  */
 //Adding a function to proccess the RDS data to the radio module when it received RDS data
-  radioInfo.attachReceiveRDS(RDS_process);
+  //radioInfo.attachReceiveRDS(RDS_process);
 //Adding functions to do when the RDS data is processed 
-  rds.attachServiceNameCallback(DisplayServiceName); //Service Provider
-  rds.attachTextCallback(DisplayRDSText);  //The full RDS data (don't know the format yet)
+  //rds.attachServiceNameCallback(DisplayServiceName); //Service Provider
+  //rds.attachTextCallback(DisplayRDSText);  //The full RDS data (don't know the format yet)
 //Tell how long we are playing the radio?
-  rds.attachTimeCallback(DisplayTime);
+  //rds.attachTimeCallback(DisplayTime);
 
   for(int i = 0;i < 3;i++) {
     pinMode(buttons[i], INPUT_PULLUP);
@@ -153,7 +155,7 @@ void setup() {
 }
 void loop() {
   char rdsData[10];
-  radioInfo.formatFrequency(rdsData, sizeof(rdsData)); //format the frequency for printing, ALTERNATIVE OPTION
+  //radioInfo.formatFrequency(rdsData, sizeof(rdsData)); //format the frequency for printing, ALTERNATIVE OPTION
   freq_read = 0;
   for(int i = 0; i < SAMPLES; i++) {
     freq_read += analogRead(FREQ);
@@ -161,19 +163,22 @@ void loop() {
   freq_read /= SAMPLES;
   frequency = map(freq_read, 0, 4095, MIN * 10, MAX * 10) / 10.0;
   radio.setFrequency(frequency);   //Uncommented because the main circuit is not connected,just testing the lcd displau for now
-  radioInfo.setFrequency(map(freq_read, 0, 4095, MIN * 100, MAX * 100)); //Set the frequency to be the same as the TEA5767, different format
+  //radioInfo.setFrequency(map(freq_read, 0, 4095, MIN * 100, MAX * 100)); //Set the frequency to be the same as the TEA5767, different format
   Serial.print(frequency);
   Serial.print(", Unfiltered: ");
   Serial.println(analogRead(FREQ));
 
-  radioInfo.checkRDS(); //Check if the RDS data is good
+  //radioInfo.checkRDS(); //Check if the RDS data is good
   RADIO_INFO info;
-  radioInfo.getRadioInfo(&info);
+  //radioInfo.getRadioInfo(&info);
+  draw_main();
+  /*
   if (!info.rds) {
     draw_main();
   } //Check if the rds is there or not if not draw the default one with no info
   else {
     draw_real();
   }
+  */
   delay(500);
 }
