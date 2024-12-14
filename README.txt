@@ -10,28 +10,26 @@ Our project is focused on creating a pocket-sized radio player that captures and
 
 Main File: Radio/Radio.ino
 
-CHANGELOG: 12/12/2024
+CHANGELOG: 12/13/2024
 
 Working:
 -Main Radio!
 -Updated Circuit Housing
+-3D Printable Box Complete (File: 3D Printed Box/Version 3/tinker.obj)
+-RDS UPDATE: Circuit may not include RDS due to limited parts
 
 To Be Finished:
--Waiting on RDS chip functionality [12/16/2024 by latest]
--Screen Layout To Be Fixed (after rds)
+-Waiting on RDS chip functionality
 -Uploaded Circuit Diagram
 -Project Photo
 -Parts List
 
 Added:
--Added 3D Printing Files (.obj) [Version 3]
--Channel Seek Added
+-RDS Implementation (commented out due to chip not functioning as expected)
+-UMass Easter Egg
+-New Screen Layout (Station, Call Sign, Genre)
 -Cleaner Comments
-
-Removed:
--Unused Radio Libraries
--Experimental Code
--Conflicting I2C Addresses (to be fixed)
-
+-Added 3D Printing Files (.obj) [Version 3] (12/12)
+-Channel Seek Added (12/12)
 
 Note: Only channel frequency supported in CICS Makerspace is UMass Radio Station: 91.1 FM
