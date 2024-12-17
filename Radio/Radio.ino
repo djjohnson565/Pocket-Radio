@@ -1,9 +1,5 @@
-/*
-Pocket Radio Project
-*/
 #include <Arduino.h>
 #include <Wire.h>
-//#include <radio.h>
 #include <TEA5767.h>
 #include <SI470X.h>
 #include <SSD1306Wire.h>
@@ -15,11 +11,8 @@ const int TOG = buttons[1];
 const int DOWN = buttons[2];
 
 #define FREQ A10 //Potentiometer Input
-#define RESET 15 //RDS Chip Reset
-#define SDIO SDA;
 #define MAX_DELAY_RDS 40 //40ms polling
 #define MAX_DELAY_STATUS 2000
-long rds_elapsed = millis();
 long status_elapsed = millis();
 #define MIN 88.0 //Min Frequency
 #define MAX 108.0 //Max Frequency
@@ -61,6 +54,8 @@ unsigned long currentMillis_button = millis();
 char *programInfo;
 char *stationName;
 char *rdsTime;
+String fix_programInfo;
+String fix_stationName;
 
 //local Amherst, MA stations: https://radio-locator.com/cgi-bin/locate?select=city&city=Amherst&state=MA
 String stations[31][3] = {
@@ -95,19 +90,13 @@ String stations[31][3] = {
   {"106.30", "WEIB", "Jazz"},
   {"106.90", "WCCC", "Christian"},
   {"107.70", "WAIY", "Religious"}
-};
-
-String Umass[] = {
-  " _   _ _ __ _ _   __ _ ___ ___ ",
-  "| |  | | '_ ` _ \\ / _` / __/ __|",
-  "| |_| | |  | |  | | (_| \\__ \\__ \\",
-  " \\__,_|_| |_| |_|\\__,_|___/___/",
-};                             
+};                       
 
 void setFrequency(float frequency) {
   radio.setFrequency(frequency);
   rds_freq = int(frequency * 100);
   if(last_rds_freq != rds_freq) {
+    radioInfo.clearRdsBuffer();
     Wire.end();
     Wire.begin();
     radioInfo.setup(15, SDA);
@@ -138,17 +127,30 @@ void draw_main() {
   }
   if (found && matchedStationIndex != -1) {
     lcd.drawString(10, 10, freq_string + "FM " + stations[matchedStationIndex][1]);
-    if(stations[matchedStationIndex][2] == "UMass") {
-      for(int i = 0; i < 4; i++) {
-        lcd.drawString(10, (20 + 10*i), Umass[i]);
-      }
-    }else {
-      lcd.drawString(10, 20, stations[matchedStationIndex][2]);
-    }
+    lcd.drawString(10, 20, stations[matchedStationIndex][2]);
   } else {
     lcd.drawString(10, 10, freq_string + "FM");
     lcd.drawString(10, 20, "Genre Unknown");
   }
+  if(programInfo != NULL) {
+    fix_programInfo = String(programInfo);
+  }
+  if(stationName != NULL) {
+    fix_stationName = String(stationName);
+  }
+  if (fix_programInfo.length() > 20 || fix_programInfo == NULL) {
+    fix_programInfo = fix_programInfo.substring(0, 20);
+  }else if(fix_programInfo.length() <= 0 || fix_stationName == NULL) {
+    fix_programInfo = "...";
+  }
+  if (fix_stationName.length() > 20) {
+    fix_stationName = fix_stationName.substring(0, 20);
+  }
+  else if(fix_stationName.length() <= 0) {
+    fix_stationName = "...";
+  }
+  lcd.drawString(10, 30, fix_stationName);
+  lcd.drawString(10, 40, fix_programInfo);
   if (!state) {
     lcd.drawString(10, 1, "Knob");
   } else {
@@ -156,7 +158,6 @@ void draw_main() {
   }
   lcd.display();
 }
-
 
 float get_freq_pot() {
   freq_read = 0;
@@ -185,6 +186,41 @@ float get_button_read(float local) {
       delay(200);
     }
   return local2;
+}
+
+//Written by https://github.com/pu2clr/SI470X/blob/master/examples/si470x_01_serial_monitor/si470x_01_RDS/si470x_01_RDS.ino
+bool checkI2C() {
+  byte error, address;
+  int nDevices;
+  Serial.println("I2C bus Scanning...");
+  nDevices = 0;
+  for(address = 1; address < 127; address++ ) {
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+    if (error == 0) {
+      Serial.print("\nI2C device found at address 0x");
+      if (address<16) {
+        Serial.print("0");
+      }
+      Serial.println(address,HEX);
+      nDevices++;
+    }
+    else if (error==4) {
+      Serial.print("\nUnknow error at address 0x");
+      if (address<16) {
+        Serial.print("0");
+      }
+      Serial.println(address,HEX);
+    }    
+  }
+  if (nDevices == 0) {
+    Serial.println("No I2C devices found\n");
+    return false;
+  }
+  else {
+    Serial.println("done\n");
+    return true;
+  }
 }
 
 //Written by https://github.com/pu2clr/SI470X/blob/master/examples/si470x_01_serial_monitor/si470x_01_RDS/si470x_01_RDS.ino
@@ -226,19 +262,11 @@ void checkRDS() {
 void setup() {
   Serial.begin(115200);
   Wire.begin();
-
   if (!checkI2C())
   {
       Serial.println("\nCheck your circuit!");
       while(1);
   }
-
-  /*
-  pinMode(RESET, OUTPUT);
-  digitalWrite(RESET, LOW);
-  delay(10);
-  digitalWrite(RESET, HIGH);
-  */
   radioInfo.setup(15, SDA);
   delay(500);
   radioInfo.setRDS(true);
@@ -246,7 +274,6 @@ void setup() {
   for(int i = 0;i < 3;i++) {
     pinMode(buttons[i], INPUT);
   }
-
   lcd.init();
   lcd.flipScreenVertically();
   lcd.setFont(ArialMT_Plain_10);
@@ -268,22 +295,20 @@ void loop() {
       state = !state;
     }
     last_toggle_state = curr_toggle_state;
-    if(!state) { //default pot reading
+    if(!state) {
       frequency = get_freq_pot();
-    }else { //channel seeker
+    }else {
       frequency = get_button_read(frequency);
     }
     Serial.println("Setting Frequency");
     setFrequency(frequency);
     Serial.println("Frequency Was Set");
-    if ((millis() - rds_elapsed) > MAX_DELAY_RDS) {
-      checkRDS();
-      rds_elapsed = millis();
-    }
     if ((millis() - status_elapsed) > MAX_DELAY_STATUS) {
       showStatus();
       status_elapsed = millis();
     }
+    radioInfo.setRDS(true);
+    checkRDS();
     if(!state) {
       Serial.print("Pot: ");
     }else {
@@ -293,40 +318,5 @@ void loop() {
     Serial.print(", Unfiltered: ");
     Serial.println(analogRead(FREQ));
     draw_main();
-  }
-}
-
-//Written by https://github.com/pu2clr/SI470X/blob/master/examples/si470x_01_serial_monitor/si470x_01_RDS/si470x_01_RDS.ino
-bool checkI2C() {
-  byte error, address;
-  int nDevices;
-  Serial.println("I2C bus Scanning...");
-  nDevices = 0;
-  for(address = 1; address < 127; address++ ) {
-    Wire.beginTransmission(address);
-    error = Wire.endTransmission();
-    if (error == 0) {
-      Serial.print("\nI2C device found at address 0x");
-      if (address<16) {
-        Serial.print("0");
-      }
-      Serial.println(address,HEX);
-      nDevices++;
-    }
-    else if (error==4) {
-      Serial.print("\nUnknow error at address 0x");
-      if (address<16) {
-        Serial.print("0");
-      }
-      Serial.println(address,HEX);
-    }    
-  }
-  if (nDevices == 0) {
-    Serial.println("No I2C devices found\n");
-    return false;
-  }
-  else {
-    Serial.println("done\n");
-    return true;
   }
 }
