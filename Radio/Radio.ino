@@ -16,8 +16,7 @@ const int DOWN = buttons[2];
 
 #define FREQ A10 //Potentiometer Input
 #define RESET 15 //RDS Chip Reset
-#define R_DATA A4 //RDS Chip Serial Data
-#define R_CLOCK A5 //RDS Chip Serial Clock
+#define SDIO SDA;
 #define MAX_DELAY_RDS 40 //40ms polling
 #define MAX_DELAY_STATUS 2000
 long rds_elapsed = millis();
@@ -30,14 +29,17 @@ long status_elapsed = millis();
 #define HEIGHT 64
 
 //Initialize Radios
+SI470X radioInfo;
 TEA5767 radio = TEA5767();
-SI470X radioInfo = SI470X();
 
 //Initialize LCD
 SSD1306Wire lcd(0x3c, SDA, SCL);
 
 int freq_read; //potentiometer reading
 float frequency = 88.0;
+float lastFrequency = frequency;
+int rds_freq = int(frequency * 100);
+int last_rds_freq = rds_freq;
 bool up_pressed;
 bool toggle_pressed;
 bool down_pressed;
@@ -102,6 +104,24 @@ String Umass[] = {
   " \\__,_|_| |_| |_|\\__,_|___/___/",
 };                             
 
+void setFrequency(float frequency) {
+  radio.setFrequency(frequency);
+  rds_freq = int(frequency * 100);
+  if(last_rds_freq != rds_freq) {
+    Wire.end();
+    Wire.begin();
+    radioInfo.setup(15, SDA);
+    delay(500);
+    radioInfo.setRDS(true);
+    radioInfo.setFrequency(rds_freq);
+    delay(500);
+    checkRDS();
+    Serial.print("RDS Frequency: ");
+    Serial.println(rds_freq);
+    last_rds_freq = int(frequency * 100);
+  }
+}
+
 void draw_main() {
   lcd.clear();
   lcd.drawRect(0, 0, WIDTH, HEIGHT);
@@ -117,7 +137,7 @@ void draw_main() {
     }
   }
   if (found && matchedStationIndex != -1) {
-    lcd.drawString(10, 10, stations[matchedStationIndex][1] + " " + freq_string + "FM");
+    lcd.drawString(10, 10, freq_string + "FM " + stations[matchedStationIndex][1]);
     if(stations[matchedStationIndex][2] == "UMass") {
       for(int i = 0; i < 4; i++) {
         lcd.drawString(10, (20 + 10*i), Umass[i]);
@@ -207,24 +227,21 @@ void setup() {
   Serial.begin(115200);
   Wire.begin();
 
-  // if (!checkI2C())
-  // {
-  //     Serial.println("\nCheck your circuit!");
-  //     while(1);
-  // }
+  if (!checkI2C())
+  {
+      Serial.println("\nCheck your circuit!");
+      while(1);
+  }
 
-  // radioInfo.setup(RESET, 15);
-  // radioInfo.setRDS(true);
-  // radioInfo.setVolume(0);
-
+  /*
+  pinMode(RESET, OUTPUT);
+  digitalWrite(RESET, LOW);
+  delay(10);
+  digitalWrite(RESET, HIGH);
+  */
+  radioInfo.setup(15, SDA);
   delay(500);
-
-  radio.setFrequency(frequency);
-  // radioInfo.setFrequency(frequency*100);
-
-  // radioInfo.setRds(true);
-  // radioInfo.setRdsMode(1);
-  // radioInfo.setMono(false);
+  radioInfo.setRDS(true);
 
   for(int i = 0;i < 3;i++) {
     pinMode(buttons[i], INPUT);
@@ -236,6 +253,7 @@ void setup() {
   lcd.clear();
   lcd.display();
   draw_main();
+  Serial.println("Setup Completed");
 }
 void loop() {
   currentMillis = millis();
@@ -255,16 +273,17 @@ void loop() {
     }else { //channel seeker
       frequency = get_button_read(frequency);
     }
-    radio.setFrequency(frequency);
-    // radioInfo.setFrequency(frequency*100);
-    // if ((millis() - rds_elapsed) > MAX_DELAY_RDS) {
-    //   checkRDS();
-    //   rds_elapsed = millis();
-    // }
-    // if ((millis() - status_elapsed) > MAX_DELAY_STATUS) {
-    //   showStatus();
-    //   status_elapsed = millis();
-    // }
+    Serial.println("Setting Frequency");
+    setFrequency(frequency);
+    Serial.println("Frequency Was Set");
+    if ((millis() - rds_elapsed) > MAX_DELAY_RDS) {
+      checkRDS();
+      rds_elapsed = millis();
+    }
+    if ((millis() - status_elapsed) > MAX_DELAY_STATUS) {
+      showStatus();
+      status_elapsed = millis();
+    }
     if(!state) {
       Serial.print("Pot: ");
     }else {
@@ -273,7 +292,6 @@ void loop() {
     Serial.print(frequency);
     Serial.print(", Unfiltered: ");
     Serial.println(analogRead(FREQ));
-    
     draw_main();
   }
 }
