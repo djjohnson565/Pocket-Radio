@@ -64,25 +64,25 @@ String stations[31][3] = {
   {"90.30", "WAMC", "Public"},
   {"91.10", "WMUA", "UMass"},
   {"91.90", "WOZQ", "College"},
-  {"92.30", "W222CH", "Oldies"},
+  {"92.30", "W222", "Oldies"},
   {"93.10", "WHYN", "Contemporary"},
   {"93.90", "WRSI", "Album"},
-  {"94.30", "W232BW", "Hits"},
+  {"94.30", "W232", "Hits"},
   {"94.70", "WMAS", "Holiday"},
   {"95.30", "WPVQ", "Country"},
   {"96.10", "WSRS", "Holiday"},
   {"96.50", "WTIC", "Contemporary"},
-  {"96.90", "W245BK", "Oldies"},
+  {"96.90", "W245", "Oldies"},
   {"97.30", "WKXE", "Unknown"}, 
-  {"97.70", "W249DP", "Hits"},
+  {"97.70", "W249", "Hits"},
   {"98.30", "WHAI", "Contemporary"},
-  {"98.90", "W255DL", "News"},
+  {"98.90", "W255", "News"},
   {"99.30", "WLZX", "Rock"},
   {"99.90", "WKMY", "Christian"},
   {"100.70", "WZLX", "Rock"},
   {"100.90", "WRNX", "Country"},
   {"101.10", "WGIR", "Rock"},
-  {"101.50", "W268CZ", "News"},
+  {"101.50", "W268C", "News"},
   {"102.10", "WAQY", "Rock"},
   {"103.30", "WXOJ", "Variety"},
   {"104.90", "WYRY", "Country"},
@@ -97,6 +97,8 @@ void setFrequency(float frequency) {
   rds_freq = int(frequency * 100);
   if(last_rds_freq != rds_freq) {
     radioInfo.clearRdsBuffer();
+    fix_programInfo = "";
+    fix_stationName = "";
     Wire.end();
     Wire.begin();
     radioInfo.setup(15, SDA);
@@ -126,25 +128,29 @@ void draw_main() {
     }
   }
   if (found && matchedStationIndex != -1) {
-    lcd.drawString(10, 10, freq_string + "FM " + stations[matchedStationIndex][1]);
+    lcd.setFont(ArialMT_Plain_16);
+    lcd.drawString(3, 5, stations[matchedStationIndex][1]);
+    lcd.setFont(ArialMT_Plain_10);
     lcd.drawString(10, 20, stations[matchedStationIndex][2]);
   } else {
-    lcd.drawString(10, 10, freq_string + "FM");
     lcd.drawString(10, 20, "Genre Unknown");
   }
+  lcd.setFont(ArialMT_Plain_16);
+  lcd.drawString(54, 5, freq_string + "FM");
+  lcd.setFont(ArialMT_Plain_10);
   if(programInfo != NULL) {
     fix_programInfo = String(programInfo);
   }
   if(stationName != NULL) {
     fix_stationName = String(stationName);
   }
-  if (fix_programInfo.length() > 20 || fix_programInfo == NULL) {
-    fix_programInfo = fix_programInfo.substring(0, 20);
+  if (fix_programInfo.length() > 15 || fix_programInfo == NULL) {
+    fix_programInfo = fix_programInfo.substring(0, 15);
   }else if(fix_programInfo.length() <= 0 || fix_stationName == NULL) {
     fix_programInfo = "...";
   }
-  if (fix_stationName.length() > 20) {
-    fix_stationName = fix_stationName.substring(0, 20);
+  if (fix_stationName.length() > 15) {
+    fix_stationName = fix_stationName.substring(0, 15);
   }
   else if(fix_stationName.length() <= 0) {
     fix_stationName = "...";
@@ -152,9 +158,13 @@ void draw_main() {
   lcd.drawString(10, 30, fix_stationName);
   lcd.drawString(10, 40, fix_programInfo);
   if (!state) {
-    lcd.drawString(10, 1, "Knob");
+    lcd.setFont(ArialMT_Plain_16);
+    lcd.drawString(85, 40, "Knb");
+    lcd.setFont(ArialMT_Plain_10);
   } else {
-    lcd.drawString(10, 1, "Buttons");
+    lcd.setFont(ArialMT_Plain_16);
+    lcd.drawString(85, 40, "Btn");
+    lcd.setFont(ArialMT_Plain_10);
   }
   lcd.display();
 }
