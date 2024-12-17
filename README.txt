@@ -12,23 +12,7 @@ Main File: Radio/Radio.ino
 
 CHANGELOG: 12/17/2024
 
-Working:
--Main Radio
--RDS
--Circuit Diagram
--Updated Circuit Housing
--3D Printable Box Complete (File: 3D Printed Box/Version 3/tinker.obj)
-
-To Be Finished:
--Concrete Circuit Housing
--Project Photo
--Parts List
-
-Added:
--RDS Implementation (Fully Working)
--New Screen Layout To Support RDS
--Added 3D Printing Files (.obj) [Version 3] (12/12)
--Channel Seek Added (12/12)
+Working! Demo photos and videos coming soon...
 
 Note: Only channel frequency supported in CICS Makerspace is UMass Radio Station: 91.1 FM
 

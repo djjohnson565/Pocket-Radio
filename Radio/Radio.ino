@@ -34,7 +34,6 @@ float lastFrequency = frequency;
 int rds_freq = int(frequency * 100);
 int last_rds_freq = rds_freq;
 bool up_pressed;
-bool toggle_pressed;
 bool down_pressed;
 bool last_toggle_state = HIGH;
 bool curr_toggle_state = HIGH;
@@ -58,7 +57,7 @@ String fix_programInfo;
 String fix_stationName;
 
 //local Amherst, MA stations: https://radio-locator.com/cgi-bin/locate?select=city&city=Amherst&state=MA
-String stations[31][3] = {
+String stations[32][3] = {
   {"88.50", "WFCR", "Public"},
   {"89.30", "WAMH", "College"},
   {"90.30", "WAMC", "Public"},
@@ -85,12 +84,15 @@ String stations[31][3] = {
   {"101.50", "W268C", "News"},
   {"102.10", "WAQY", "Rock"},
   {"103.30", "WXOJ", "Variety"},
+  {"104.30", "DJKN", "Local"},
   {"104.90", "WYRY", "Country"},
   {"105.50", "WWEI", "Sports"},
   {"106.30", "WEIB", "Jazz"},
   {"106.90", "WCCC", "Christian"},
   {"107.70", "WAIY", "Religious"}
-};                       
+};            
+
+int num_station = sizeof(stations) / sizeof(stations[0]);
 
 void setFrequency(float frequency) {
   radio.setFrequency(frequency);
@@ -113,30 +115,31 @@ void setFrequency(float frequency) {
   }
 }
 
-void draw_main() {
+void draw_main(float freq) {
   lcd.clear();
-  lcd.drawRect(0, 0, WIDTH, HEIGHT);
-  String freq_string = String(frequency);
+  lcd.setTextAlignment(TEXT_ALIGN_CENTER);
+  String freq_string = String(freq) + "FM";
   bool found = false;
   int matchedStationIndex = -1;
   for (int i = 0; i < 31; ++i) {
     float stationFreq = stations[i][0].toFloat();
-    if (abs(stationFreq - frequency) < 0.1) {
+    if (abs(stationFreq - freq) < 0.1) {
       matchedStationIndex = i;
       found = true;
       break;
     }
   }
+  
   if (found && matchedStationIndex != -1) {
-    lcd.setFont(ArialMT_Plain_16);
-    lcd.drawString(3, 5, stations[matchedStationIndex][1]);
     lcd.setFont(ArialMT_Plain_10);
-    lcd.drawString(10, 20, stations[matchedStationIndex][2]);
+    lcd.drawString(64, 20, stations[matchedStationIndex][1]);
+    lcd.drawString(64, 32, stations[matchedStationIndex][2]);
   } else {
-    lcd.drawString(10, 20, "Genre Unknown");
+    lcd.setFont(ArialMT_Plain_10);
+    lcd.drawString(64, 23, "Genre Unknown");
   }
   lcd.setFont(ArialMT_Plain_16);
-  lcd.drawString(54, 5, freq_string + "FM");
+  lcd.drawString(64, 2, freq_string);
   lcd.setFont(ArialMT_Plain_10);
   if(programInfo != NULL) {
     fix_programInfo = String(programInfo);
@@ -144,29 +147,76 @@ void draw_main() {
   if(stationName != NULL) {
     fix_stationName = String(stationName);
   }
-  if (fix_programInfo.length() > 15 || fix_programInfo == NULL) {
+  
+  if (fix_programInfo.length() > 15) {
     fix_programInfo = fix_programInfo.substring(0, 15);
-  }else if(fix_programInfo.length() <= 0 || fix_stationName == NULL) {
+  }else if(fix_programInfo.length() <= 0 || fix_programInfo == NULL) {
     fix_programInfo = "...";
   }
   if (fix_stationName.length() > 15) {
     fix_stationName = fix_stationName.substring(0, 15);
   }
-  else if(fix_stationName.length() <= 0) {
+  else if(fix_stationName.length() <= 0 || fix_stationName == NULL) {
     fix_stationName = "...";
   }
-  lcd.drawString(10, 30, fix_stationName);
-  lcd.drawString(10, 40, fix_programInfo);
+  lcd.drawString(64, 44, fix_stationName);
+  lcd.drawString(64, 54, fix_programInfo);
+  lcd.setTextAlignment(TEXT_ALIGN_RIGHT);
+  lcd.setFont(ArialMT_Plain_16);
   if (!state) {
-    lcd.setFont(ArialMT_Plain_16);
-    lcd.drawString(85, 40, "Knb");
-    lcd.setFont(ArialMT_Plain_10);
+    lcd.drawString(127, 22, "K");
   } else {
-    lcd.setFont(ArialMT_Plain_16);
-    lcd.drawString(85, 40, "Btn");
-    lcd.setFont(ArialMT_Plain_10);
+    lcd.drawString(127, 22, "B");
+    lcd.fillTriangle(120, 2, 115, 10, 125, 10);
+    lcd.fillTriangle(120, 62, 115, 54, 125, 54);
   }
+  lcd.setFont(ArialMT_Plain_10);
   lcd.display();
+}
+void draw_to_next(float now, float target) {
+  Serial.println("Entering draw_to_next");
+  Serial.print("Target value: ");
+  Serial.println(target);
+  if(now < target) {
+    if (abs(target - stations[num_station - 1][0].toFloat()) < 0.1 && now <= stations[0][0].toFloat()) {
+      for(float i = now; i >= 88.0; i-= 0.1) {
+        draw_main(i);
+        delay(200);
+      }
+      for (float i = 108.0; i >= target; i -= 0.1) {
+        draw_main(i);
+        delay(200);
+      }
+    }
+    else {
+      for (float i = now; i <= target; i += 0.1) {
+        Serial.println("Entered the loop successfully");
+        draw_main(i);
+        delay(200);
+      }
+    }
+  }
+  else {
+    if (abs(target - stations[0][0].toFloat()) < 0.1 && now >= stations[num_station - 1][0].toFloat()) {
+      for(float i = now; i <= 108.0; i+= 0.1) {
+        draw_main(i);
+        delay(200);
+      }
+      for (float i = 88.0; i <= target; i += 0.1) {
+        Serial.println("Entered the loop successfully");
+        draw_main(i);
+        delay(200);
+      }
+    }
+    else {
+      Serial.println("Entering draw_to_next_for_loop");
+      for (float i = now; i >= target; i-= 0.1) {
+        Serial.println("Entered the loop successfully");
+        draw_main(i);
+        delay(200);
+      }
+    }
+  }
 }
 
 float get_freq_pot() {
@@ -180,20 +230,32 @@ float get_freq_pot() {
 
 float get_button_read(float local) {
   float local2 = local;
-  if(up_pressed) {
-      if(local >= 108.0) {
-        local2 = 88.0;
-      }else {
-        local2 += 0.1;
+  //Find the index for the next station
+  int station_index = 0;
+  for (station_index; station_index < num_station && local2 > stations[station_index][0].toFloat(); station_index++) {
+  }
+  // Serial.println("For loop not fail");
+  // Serial.print("Station index: ");
+  // Serial.println(station_index);
+  if(up_pressed){
+      if(station_index < num_station) {
+        station_index++;
       }
-      delay(200);
+      station_index %= num_station;
+      // Serial.println("Before drawing");
+      draw_to_next(local, stations[station_index][0].toFloat());
+      // Serial.println("Finished Drawing");
+      return stations[station_index][0].toFloat();
     }else if(down_pressed) {
-      if(local <= 88.0) {
-        local2 = 108.0;
-      }else {
-        local2 -= 0.1;
+      station_index--;
+      if (station_index < 0) {
+        station_index = num_station - 1;
       }
+      // Serial.println("Before drawing");
+      draw_to_next(local, stations[station_index][0].toFloat());
       delay(200);
+      // Serial.println("Finished Drawing");
+      return stations[station_index][0].toFloat();
     }
   return local2;
 }
@@ -282,14 +344,15 @@ void setup() {
   radioInfo.setRDS(true);
 
   for(int i = 0;i < 3;i++) {
-    pinMode(buttons[i], INPUT);
+    pinMode(buttons[i], INPUT_PULLUP);
   }
   lcd.init();
   lcd.flipScreenVertically();
   lcd.setFont(ArialMT_Plain_10);
   lcd.clear();
   lcd.display();
-  draw_main();
+  lcd.setTextAlignment(TEXT_ALIGN_CENTER);
+  draw_main(frequency);
   Serial.println("Setup Completed");
 }
 void loop() {
@@ -297,36 +360,46 @@ void loop() {
   if(currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
     up_pressed = (digitalRead(UP) == LOW);
-    toggle_pressed = (digitalRead(TOG) == LOW);
     down_pressed = (digitalRead(DOWN) == LOW);
     currentMillis_button = millis();
     curr_toggle_state = digitalRead(TOG);
+    // Serial.println("Assertion check 1");
+    Serial.println("Check array length correctly?:");
+    Serial.print(num_station);
     if(last_toggle_state == HIGH && curr_toggle_state == LOW) {
       state = !state;
     }
+    // Serial.println("Assertion check 2");
     last_toggle_state = curr_toggle_state;
     if(!state) {
       frequency = get_freq_pot();
+      // Serial.println("Assertion check 3.1");
     }else {
       frequency = get_button_read(frequency);
+      // Serial.println("Assertion check 3.2");
     }
     Serial.println("Setting Frequency");
+    // erial.println("Assertion check 4");
     setFrequency(frequency);
-    Serial.println("Frequency Was Set");
+    //Serial.println("Frequency Was Set");
     if ((millis() - status_elapsed) > MAX_DELAY_STATUS) {
       showStatus();
       status_elapsed = millis();
     }
+    // Serial.println("Assertion check 5");
     radioInfo.setRDS(true);
     checkRDS();
+    // Serial.println("Assertion check 6");
     if(!state) {
       Serial.print("Pot: ");
     }else {
       Serial.print("Button: ");
     }
-    Serial.print(frequency);
-    Serial.print(", Unfiltered: ");
-    Serial.println(analogRead(FREQ));
-    draw_main();
+    // Serial.println("Assertion check 7");
+    // Serial.print(frequency);
+    // Serial.print(", Unfiltered: ");
+    // Serial.println(analogRead(FREQ));
+    draw_main(frequency);
+    // Serial.println("Assertion check 8");
   }
 }
