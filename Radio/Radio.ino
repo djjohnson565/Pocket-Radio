@@ -1,3 +1,9 @@
+/*
+Arduino Pocket Radio
+Written By: Derek Johnson & Khang Vinh Nguyen
+Source: https://github.com/djjohnson565/Pocket-Radio
+*/
+
 #include <Arduino.h>
 #include <Wire.h>
 #include <TEA5767.h>
@@ -29,15 +35,15 @@ TEA5767 radio = TEA5767();
 SSD1306Wire lcd(0x3c, SDA, SCL);
 
 int freq_read; //potentiometer reading
-float frequency = 88.0;
+float frequency = 88.0; //active frequency
 float lastFrequency = frequency;
-int rds_freq = int(frequency * 100);
+int rds_freq = int(frequency * 100); //convert frequency for use with RDS chip
 int last_rds_freq = rds_freq;
 bool up_pressed;
 bool down_pressed;
 bool last_toggle_state = HIGH;
 bool curr_toggle_state = HIGH;
-bool state;
+bool state; //knob or buttons for channels
 
 //Non-blocking delay (main loop)
 unsigned long previousMillis = 0;
@@ -57,6 +63,7 @@ String fix_programInfo;
 String fix_stationName;
 
 //local Amherst, MA stations: https://radio-locator.com/cgi-bin/locate?select=city&city=Amherst&state=MA
+//You can add/remove your own channel presets by simply adding another entry of {"station", "call sign", "genre"}, and increment the array by the amount of channels you add
 String stations[32][3] = {
   {"88.50", "WFCR", "Public"},
   {"89.30", "WAMH", "College"},
@@ -129,7 +136,6 @@ void draw_main(float freq) {
       break;
     }
   }
-  
   if (found && matchedStationIndex != -1) {
     lcd.setFont(ArialMT_Plain_10);
     lcd.drawString(64, 20, stations[matchedStationIndex][1]);
@@ -147,7 +153,6 @@ void draw_main(float freq) {
   if(stationName != NULL) {
     fix_stationName = String(stationName);
   }
-  
   if (fix_programInfo.length() > 15) {
     fix_programInfo = fix_programInfo.substring(0, 15);
   }else if(fix_programInfo.length() <= 0 || fix_programInfo == NULL) {
@@ -173,6 +178,7 @@ void draw_main(float freq) {
   lcd.setFont(ArialMT_Plain_10);
   lcd.display();
 }
+
 void draw_to_next(float now, float target) {
   Serial.println("Entering draw_to_next");
   Serial.print("Target value: ");
@@ -334,15 +340,13 @@ void checkRDS() {
 void setup() {
   Serial.begin(115200);
   Wire.begin();
-  if (!checkI2C())
-  {
+  if (!checkI2C()) {
       Serial.println("\nCheck your circuit!");
       while(1);
   }
   radioInfo.setup(15, SDA);
   delay(500);
   radioInfo.setRDS(true);
-
   for(int i = 0;i < 3;i++) {
     pinMode(buttons[i], INPUT_PULLUP);
   }
@@ -355,6 +359,7 @@ void setup() {
   draw_main(frequency);
   Serial.println("Setup Completed");
 }
+
 void loop() {
   currentMillis = millis();
   if(currentMillis - previousMillis >= interval) {
@@ -379,9 +384,9 @@ void loop() {
       // Serial.println("Assertion check 3.2");
     }
     Serial.println("Setting Frequency");
-    // erial.println("Assertion check 4");
+    // Serial.println("Assertion check 4");
     setFrequency(frequency);
-    //Serial.println("Frequency Was Set");
+    // Serial.println("Frequency Was Set");
     if ((millis() - status_elapsed) > MAX_DELAY_STATUS) {
       showStatus();
       status_elapsed = millis();
