@@ -10,14 +10,7 @@ Our project is focused on creating a pocket-sized radio player that captures and
 
 [Main File](./Radio/Radio.ino)
 
-CHANGELOG: 12/17/2024
-
-Project Photos And Video Demos Have Been Added!
-
-Note: Only channel frequency supported in CICS Makerspace is UMass Radio Station: 91.1 FM
-
 Parts List:
-
 1 x Makerboard
 1 x USB-C Power Cable
 1 x TEA5767 (Radio)
@@ -28,3 +21,6 @@ Parts List:
 1 x Speaker (4 Ohms)
 2 x 10kOhm Potentiometers
 [3D Print The Box](./Complete 3D Prints)
+
+CHANGELOG: 3/30/2025
+This project was completed on 12/17/2024. It has been archived, as it is no longer being maintained. Please check out our GitHub pages for more projects!
